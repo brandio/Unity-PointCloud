@@ -11,9 +11,10 @@ public class PlyImporter : MonoBehaviour {
     {
         public Point(float xx, float yy, float zz, float nxx, float nyy, float nzz, float rr, float gg, float bb)
         {
-            x = xx;
-            y = yy;
-            z = zz;
+            int scale = 10;
+            x = xx * scale;
+            y = yy * scale;
+            z = zz * scale;
             nX = nxx;
             nY = nyy;
             nZ = nzz;
