@@ -27,13 +27,16 @@ public class PointOctree<T> where T : class {
 	// Minimum side length that a node can be - essentially an alternative to having a max depth
 	readonly float minSize;
 
+    // Max depth
+    readonly int maxDepth;
+
 	/// <summary>
 	/// Constructor for the point octree.
 	/// </summary>
 	/// <param name="initialWorldSize">Size of the sides of the initial node. The octree will never shrink smaller than this.</param>
 	/// <param name="initialWorldPos">Position of the centre of the initial node.</param>
 	/// <param name="minNodeSize">Nodes will stop splitting if the new nodes would be smaller than this.</param>
-	public PointOctree(float initialWorldSize, Vector3 initialWorldPos, float minNodeSize) {
+	public PointOctree(float initialWorldSize, Vector3 initialWorldPos, float minNodeSize, int maxTreeDepth) {
 		if (minNodeSize > initialWorldSize) {
 			Debug.LogWarning("Minimum node size must be at least as big as the initial world size. Was: " + minNodeSize + " Adjusted to: " + initialWorldSize);
 			minNodeSize = initialWorldSize;
@@ -41,7 +44,8 @@ public class PointOctree<T> where T : class {
 		Count = 0;
 		initialSize = initialWorldSize;
 		minSize = minNodeSize;
-		rootNode = new PointOctreeNode<T>(initialSize, minSize, initialWorldPos);
+        maxDepth = maxTreeDepth;
+        rootNode = new PointOctreeNode<T>(initialSize, minSize, initialWorldPos, maxDepth, null);
 	}
 
 	// #### PUBLIC METHODS ####
@@ -184,7 +188,7 @@ public class PointOctree<T> where T : class {
 		Vector3 newCenter = rootNode.Center + new Vector3(xDirection * half, yDirection * half, zDirection * half);
 
 		// Create a new, bigger octree root node
-		rootNode = new PointOctreeNode<T>(newLength, minSize, newCenter);
+		rootNode = new PointOctreeNode<T>(newLength, minSize, newCenter, maxDepth, null);
 
 		// Create 7 new octree children to go with the old root as children of the new root
 		int rootPos = GetRootPosIndex(xDirection, yDirection, zDirection);
@@ -197,7 +201,7 @@ public class PointOctree<T> where T : class {
 				xDirection = i % 2 == 0 ? -1 : 1;
 				yDirection = i > 3 ? -1 : 1;
 				zDirection = (i < 2 || (i > 3 && i < 6)) ? -1 : 1;
-				children[i] = new PointOctreeNode<T>(rootNode.SideLength, minSize, newCenter + new Vector3(xDirection * half, yDirection * half, zDirection * half));
+				children[i] = new PointOctreeNode<T>(rootNode.SideLength, minSize, newCenter + new Vector3(xDirection * half, yDirection * half, zDirection * half), maxDepth, null);
 			}
 		}
 

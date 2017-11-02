@@ -20,8 +20,14 @@ public class PointOctreeNode<T> where T : class {
 	// Objects in this node
 	readonly List<OctreeObject> objects = new List<OctreeObject>();
 
-	// Child nodes, if any
-	PointOctreeNode<T>[] children = null;
+    // max depth for a node in this octre
+    readonly int maxDepth;
+
+    // parent node, if any
+    PointOctreeNode<T> parent = null;
+
+    // Child nodes, if any
+    PointOctreeNode<T>[] children = null;
 
 	// bounds of potential children to this node. These are actual size (with looseness taken into account), not base size
 	Bounds[] childBounds;
@@ -45,8 +51,10 @@ public class PointOctreeNode<T> where T : class {
 	/// <param name="baseLengthVal">Length of this node, not taking looseness into account.</param>
 	/// <param name="minSizeVal">Minimum size of nodes in this octree.</param>
 	/// <param name="centerVal">Centre position of this node.</param>
-	public PointOctreeNode(float baseLengthVal, float minSizeVal, Vector3 centerVal) {
+	public PointOctreeNode(float baseLengthVal, float minSizeVal, Vector3 centerVal, int newMaxDepth, PointOctreeNode<T> nodeParent) {
 		SetValues(baseLengthVal, minSizeVal, centerVal);
+        parent = nodeParent;
+        maxDepth = newMaxDepth;
 	}
 
 	// #### PUBLIC METHODS ####
@@ -64,6 +72,28 @@ public class PointOctreeNode<T> where T : class {
 		SubAdd(obj, objPos);
 		return true;
 	}
+
+    public PointOctreeNode<T> Parent()
+    {
+        return parent;
+    }
+
+    public void SetParent(PointOctreeNode<T> newParent)
+    {
+        parent = newParent;
+    }
+
+    public int Depth()
+    {
+        int depth = 0;
+        PointOctreeNode<T> currentNode = this;
+        while (currentNode.Parent() != null)
+        {
+            depth++;
+            currentNode = currentNode.Parent();
+        }
+        return depth;
+    }
 
 	/// <summary>
 	/// Remove an object. Makes the assumption that the object only exists once in the tree.
@@ -201,8 +231,11 @@ public class PointOctreeNode<T> where T : class {
 			Debug.LogError("Child octree array must be length 8. Was length: " + childOctrees.Length);
 			return;
 		}
-
 		children = childOctrees;
+        foreach(PointOctreeNode<T> child in children)
+        {
+            child.SetParent(this);
+        }
 	}
 
 	/// <summary>
@@ -363,9 +396,14 @@ public class PointOctreeNode<T> where T : class {
 	/// <param name="obj">Object to add.</param>
 	/// <param name="objPos">Position of the object.</param>
 	void SubAdd(T obj, Vector3 objPos) {
+        if (this.Depth() >= maxDepth)
+        {
+            OctreeObject newObj = new OctreeObject { Obj = obj, Pos = objPos };
+            objects.Add(newObj);
+        }
 		// We know it fits at this level if we've got this far
 		// Just add if few objects are here, or children would be below min size
-		if (objects.Count < NUM_OBJECTS_ALLOWED || (SideLength / 2) < minSize) {
+		else if (objects.Count < NUM_OBJECTS_ALLOWED || (SideLength / 2) < minSize) {
 			OctreeObject newObj = new OctreeObject { Obj = obj, Pos = objPos };
 			//Debug.Log("ADD " + obj.name + " to depth " + depth);
 			objects.Add(newObj);
@@ -435,14 +473,14 @@ public class PointOctreeNode<T> where T : class {
 		float quarter = SideLength / 4f;
 		float newLength = SideLength / 2;
 		children = new PointOctreeNode<T>[8];
-		children[0] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, quarter, -quarter));
-		children[1] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, quarter, -quarter));
-		children[2] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, quarter, quarter));
-		children[3] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, quarter, quarter));
-		children[4] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, -quarter, -quarter));
-		children[5] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, -quarter, -quarter));
-		children[6] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, -quarter, quarter));
-		children[7] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, -quarter, quarter));
+		children[0] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, quarter, -quarter),maxDepth, this);
+		children[1] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, quarter, -quarter), maxDepth, this);
+		children[2] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, quarter, quarter), maxDepth, this);
+		children[3] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, quarter, quarter), maxDepth, this);
+		children[4] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, -quarter, -quarter), maxDepth, this);
+		children[5] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, -quarter, -quarter), maxDepth, this);
+		children[6] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(-quarter, -quarter, quarter), maxDepth, this);
+		children[7] = new PointOctreeNode<T>(newLength, minSize, Center + new Vector3(quarter, -quarter, quarter), maxDepth, this);
 	}
 
 	/// <summary>

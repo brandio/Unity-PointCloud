@@ -3,16 +3,42 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-[RequireComponent(typeof(PointDisplayer))]
+
 // Reads .ply files and creates a list of points
-// Will only work with ply files formatted the way the python photogrammetry toolbox creates
 public class PlyImporter : MonoBehaviour {
 
-	// File path for ply file to import
-	public string plyFilePath = "/home/branden/Desktop/models0/pmvs_options.txt.ply";
+    public class Point
+    {
+        public Point(float xx, float yy, float zz, float nxx, float nyy, float nzz, float rr, float gg, float bb)
+        {
+            x = xx;
+            y = yy;
+            z = zz;
+            nX = nxx;
+            nY = nyy;
+            nZ = nzz;
+            r = rr;
+            g = gg;
+            b = bb;
+        }
+        public float x;
+        public float y;
+        public float z;
+
+        public float nX;
+        public float nY;
+        public float nZ;
+
+        public float r;
+        public float g;
+        public float b;
+    }
+
+    // File path for ply file to import
+    public string plyFilePath = "/home/branden/Desktop/models0/pmvs_options.txt.ply";
 
 	PointDisplayer pointDisplayer;
-
+    PoissonReconstruction surfaceReconstructor;
 	public void readPly(string path)
 	{
 		StreamReader reader = new StreamReader(plyFilePath);
@@ -26,7 +52,7 @@ public class PlyImporter : MonoBehaviour {
 		}
 		
 		bool header = true;
-		List<PointDisplayer.Point> points = new List<PointDisplayer.Point>();
+		List<Point> points = new List<Point>();
 		while(line != null)
 		{
 			if(header)
@@ -41,21 +67,28 @@ public class PlyImporter : MonoBehaviour {
 				string[] stringArray = line.Split(null);
 				if(stringArray.Length != 9)
 					continue;
-				PointDisplayer.Point point = new PointDisplayer.Point(float.Parse(stringArray[0]),float.Parse(stringArray[1]),float.Parse(stringArray[2]),
+				Point point = new Point(float.Parse(stringArray[0]),float.Parse(stringArray[1]),float.Parse(stringArray[2]),
 										      float.Parse(stringArray[3]),float.Parse(stringArray[4]),float.Parse(stringArray[5]),
 										      float.Parse(stringArray[6]),float.Parse(stringArray[7]),float.Parse(stringArray[8]));
 				points.Add(point);
-
 			}
 			line = reader.ReadLine();
 			
 		}
-		pointDisplayer.setPointCloud(points);
+        if(pointDisplayer != null)
+        {
+            pointDisplayer.setPointCloud(points);
+        }
+        if(surfaceReconstructor != null)
+        {
+            surfaceReconstructor.reconstruct(points, 6);
+        }
 		reader.Close();
 	}
 
 	void Start () {
 		pointDisplayer = this.GetComponent(typeof(PointDisplayer)) as PointDisplayer;
-		readPly(plyFilePath);
+        surfaceReconstructor = this.GetComponent(typeof(PoissonReconstruction)) as PoissonReconstruction;
+        readPly(plyFilePath);
 	}
 }

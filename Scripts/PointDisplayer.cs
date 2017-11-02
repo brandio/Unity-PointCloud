@@ -2,37 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(PointDisplayer))]
 public class PointDisplayer : MonoBehaviour {
 
-	public struct Point
-	{	
-		public Point(float xx,float yy,float zz,float nxx,float nyy,float nzz,float rr, float gg, float bb)
-		{
-			x = xx;
-			y = yy;
-			z = zz;
-			nX = nxx;
-			nY = nyy;
-			nZ = nzz;
-			r = rr;
-			g = gg;
-			b = bb;
-		}
-		public float x;
-		public float y;
-		public float z;
-
-		public float nX;
-		public float nY;
-		public float nZ;
-
-		public float r;
-		public float g;
-		public float b;
-	}
-
 	const int MAX_POINTS_IN_MESH = 65000;
-	public void setPointCloud(List<Point> points)
+	public void setPointCloud(List<PlyImporter.Point> points)
 	{
 		int numMeshes = points.Count/MAX_POINTS_IN_MESH;
 		// I dont think this will ever be the case so just log and return for now
