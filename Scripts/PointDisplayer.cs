@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// Creats a new gameobject to display points
+
 [RequireComponent(typeof(PointDisplayer))]
 public class PointDisplayer : MonoBehaviour {
 
