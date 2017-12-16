@@ -82,7 +82,7 @@ public class PlyImporter : MonoBehaviour {
         }
         if(surfaceReconstructor != null)
         {
-            surfaceReconstructor.reconstruct(points, 6);
+            //surfaceReconstructor.reconstruct(points, 6);
         }
 		reader.Close();
 	}
