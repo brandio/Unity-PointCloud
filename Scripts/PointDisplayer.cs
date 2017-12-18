@@ -2,13 +2,21 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Creats a new gameobject to display points
+// Displays a point cloud
 
-[RequireComponent(typeof(PointDisplayer))]
+[RequireComponent(typeof(ParticleSystem))]
 public class PointDisplayer : MonoBehaviour {
 
-	const int MAX_POINTS_IN_MESH = 1;
+    // Size of points
+    public float pointSize = 0.01f;
+    
+    bool bPointsUpdated = false;
+    ParticleSystem.Particle[] cloud;
 
+    /* This method displays the point cloud using a mesh.
+       It seems better to use a particle system so this isnt used anymore but keep just in case
+       we need it for something */
+    const int MAX_POINTS_IN_MESH = 65000;
     IEnumerator MakeMeshes(List<PlyImporter.Point> points)
     {
         int numMeshes = points.Count / MAX_POINTS_IN_MESH;
@@ -49,8 +57,28 @@ public class PointDisplayer : MonoBehaviour {
                 
         }
     }
-	public void setPointCloud(List<PlyImporter.Point> points)
+
+	public void SetPointCloud(List<PlyImporter.Point> points)
 	{
-        StartCoroutine("MakeMeshes", points);
-	}
+        cloud = new ParticleSystem.Particle[points.Count];
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            PlyImporter.Point point = points[i];
+            cloud[i].position = new Vector3(point.x, point.y, point.z);
+            cloud[i].startColor = new Color(point.r / 100, point.g / 100, point.b / 100);
+            cloud[i].startSize = pointSize;
+        }
+        bPointsUpdated = true;
+    }
+
+    void Update()
+    {
+        if (bPointsUpdated)
+        {
+            ParticleSystem particleSystem = gameObject.GetComponent<ParticleSystem>();
+            particleSystem.SetParticles(cloud, cloud.Length);
+            bPointsUpdated = false;
+        }
+    }
 }

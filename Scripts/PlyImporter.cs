@@ -78,7 +78,7 @@ public class PlyImporter : MonoBehaviour {
 		}
         if(pointDisplayer != null)
         {
-            pointDisplayer.setPointCloud(points);
+            pointDisplayer.SetPointCloud(points);
         }
         if(surfaceReconstructor != null)
         {
